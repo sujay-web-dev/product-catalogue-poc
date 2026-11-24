@@ -108,18 +108,21 @@ change soon, and adding one later is a small change.
 **S1. Search runs in our backend.**
 - Gap: Fake Store has no search endpoint.
 - Assumption: the backend loads the catalogue once, caches it with an expiry,
-  and filters in memory behind `ProductRepository.search()`.
-- Why: fine for 20 products, and it keeps search behind the interface a real
-  data source would implement.
-- If wrong (large catalogue): implement `search()` in a new adapter or a search
-  engine. Nothing above it changes.
+  and the search service filters the list in memory with `matchesQuery()`.
+  `ProductRepository` has no `search()` method yet.
+- Why: fine for 20 products, and the smallest interface that works.
+- If wrong (large catalogue): add `search()` to `ProductRepository` and implement
+  it in the data source or a search engine. Routes and the client don't change.
 
 **S2. What "matching" means.**
 - Assumption: case-insensitive and trimmed; title, description and category are
-  searched; every word in the term must appear. Plain string matching, never a
-  regular expression built from user input.
-- Why: predictable results, and special characters can't break it. "I only see
-  matching products" means tests also check what is excluded.
+  searched. Every word in the term must match the start of a word in the
+  product text, so "men" matches "Mens Cotton Jacket" but not "Women's
+  clothing". Plain string comparison, never a regular expression built from
+  user input.
+- Why: predictable results, and special characters can't break it. Plain
+  substring matching made "men" return women's clothing. "I only see matching
+  products" means tests also check what is excluded.
 - If wrong: change `matchesQuery()` and its unit tests.
 
 **S3. Edge cases.**
