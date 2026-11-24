@@ -113,12 +113,14 @@ docs/SPEC.md is background. If a change would contradict DECISIONS.md, stop and 
 6. `selectTopRated` (H1/H2, reads `featured.json`) and `matchesQuery` (S2, word-start
    matching) + unit tests, including "men" → "Mens Cotton Jacket" but not "Women's clothing".
 7. Fake Store adapter: 5s timeout, zod schemas, slug/name mapping (C2), TTL cache (S1, G2)
-   + tests with stubbed fetch.
+   + tests with stubbed fetch. Live check (24 Nov): `GET /products/999` returns
+   HTTP 200 with an empty body, not 404; treat that as not found.
 8. `GET /api/products/featured` and `GET /api/products/:id` + tests.
 9. `GET /api/categories` and `GET /api/categories/:slug` (top rated + additional, C1) + tests.
 10. `GET /api/search?q=` (S1/S3: empty, >100 chars → 400) + tests.
 11. `POST /api/enquiries`: zod body (E2), product lookup → 422 (E3), rate limit (E7),
-    send via `EmailSender`, 502 on send failure (E5) + tests.
+    send via `EmailSender`, 502 on send failure (E5) + tests. Set `trust proxy` to 1
+    (nginx in front), or the rate limit sees every customer as the same IP.
 12. SMTP `EmailSender` adapter (Nodemailer, plain text, Reply-To, E4) + test with
     Nodemailer's stream transport; wire real adapters in `index.ts`; check in Mailpit.
 
