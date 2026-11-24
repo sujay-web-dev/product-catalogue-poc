@@ -14,8 +14,8 @@ from code comments and the PR description.
 
 ### Stack
 
-- **Client:** React with TypeScript, built with Vite. React Router for pages,
-  TanStack Query for loading and caching API data.
+- **Client:** React with TypeScript, built with Vite. React Router for pages;
+  plain `fetch` calls kept in one API module.
 - **Backend:** Node.js with TypeScript and Express 5. zod validates everything
   that enters the system: requests, environment config at startup, and Fake
   Store responses.
@@ -27,14 +27,18 @@ from code comments and the PR description.
 
 ### Architecture
 
-Backend services hold the business rules (top rated, search, enquiries). They
-depend on three interfaces, never on Fake Store or an email library directly:
+Backend services hold the business rules (top rated, search, enquiries). The
+brief says the data source and email provider will change, so the services
+depend on two interfaces, never on Fake Store or an email library directly:
 
 | Interface | Today | Later |
 |---|---|---|
-| `ProductRepository` | Fake Store API, cached; a local JSON file for tests and offline runs | Any product system or database |
-| `MerchandisingRepository` | The owner's top-rated picks in a config file | A CMS or admin screen |
-| `EmailSender` | SMTP (Mailpit locally); console output in tests | AWS SES or another provider |
+| `ProductRepository` | Fake Store API with an in-memory cache | Any product system or database |
+| `EmailSender` | SMTP (Mailpit locally) | AWS SES or another provider |
+
+The owner's top-rated picks live in a plain config file (`featured.json`).
+I didn't put an interface in front of it: nothing in the brief says it will
+change soon, and adding one later is a small change.
 
 - One composition root picks the adapters from environment variables. Changing
   the data source or email provider means adding an adapter and changing config,
@@ -43,8 +47,8 @@ depend on three interfaces, never on Fake Store or an email library directly:
   or category strings.
 - API: REST under `/api`, errors as JSON in one shape, no stack traces in
   responses.
-- Look and feel: colours, fonts and spacing live in one `tokens.css`. The final
-  branding replaces that file.
+- Look and feel: one stylesheet, with colours, fonts and spacing defined as CSS
+  variables at the top. The final branding replaces those variables.
 - Configuration comes from environment variables, validated at startup.
   `.env.example` lists every one. No secrets in the repo.
 
@@ -53,8 +57,8 @@ depend on three interfaces, never on Fake Store or an email library directly:
 - Unit tests for the rules (top rated, search matching).
 - API tests over HTTP for every endpoint, including validation failures.
 - UI tests for the critical flows: home, category, search, product, enquiry.
-- Tests use the JSON product source and a fake email sender, so they never touch
-  the network.
+- Tests use a fake product repository loaded from a JSON fixture and a fake
+  email sender, so they never touch the network.
 
 ## Assumptions
 
@@ -63,11 +67,11 @@ depend on three interfaces, never on Fake Store or an email library directly:
 **H1. "Top rated" means the owner's picks, not the API's rating field.**
 - Gap: the criterion says "I have chosen 5 products"; Fake Store also has a
   `rating` field.
-- Assumption: five product IDs in a backend config file, read through
-  `MerchandisingRepository` and shown in the configured order.
-- Why: it matches the wording, and a CMS or admin screen can replace the config
-  later.
-- If wrong: swap the merchandising adapter. The API and client don't change.
+- Assumption: five product IDs in a backend config file (`featured.json`),
+  shown in the configured order.
+- Why: it matches the wording. When the owner needs to edit picks themselves, a
+  CMS or admin screen can replace the file.
+- If wrong: change where the IDs come from. The API and client don't change.
 
 **H2. One top-rated rule everywhere.**
 - Gap: a chosen product can disappear from the source, and five global picks
@@ -172,8 +176,8 @@ depend on three interfaces, never on Fake Store or an email library directly:
 - Next: save enquiries and send emails from a queue with retries.
 
 **E7. Abuse and personal data.**
-- Assumption: a rate limit on the enquiry endpoint, a hidden honeypot field, a
-  request size limit, and no contact details in logs.
+- Assumption: a rate limit on the enquiry endpoint, a request size limit, and no
+  contact details in logs.
 - A CAPTCHA needs a third-party account, which the brief rules out for
   reviewers, so it is a next step.
 
@@ -191,7 +195,7 @@ accessibility throughout: semantic HTML, labelled fields, alt text, keyboard
 use.
 
 **G2. Fake Store may be slow or down.** A 5-second timeout, a cached catalogue,
-a friendly error, and `PRODUCT_SOURCE=fixture` to run from the local JSON file.
+and a friendly error page instead of a crash.
 
 **G3. Infrastructure.** Dockerfiles and Docker Compose only. Both containers
 would run on AWS; see "How this grows".
@@ -203,7 +207,9 @@ would run on AWS; see "How this grows".
 | Admin screen for top-rated picks | A config file proves the rule (H1) |
 | Pagination | Small catalogue (C1) |
 | Saved enquiries, customer confirmation email | See E6 |
-| CAPTCHA | Needs a third-party account (E7) |
+| CAPTCHA, honeypot field | CAPTCHA needs a third-party account; the rate limit covers the basics (E7) |
+| Interface for top-rated picks | Config file is enough until the owner needs to edit picks (H1) |
+| Switch to run from local JSON instead of Fake Store | The fixture is used in tests only (G2) |
 | Accounts, cart, checkout | Not in the acceptance criteria |
 | Server rendering and SEO | Not needed for an interactive proof of concept |
 | Translations | Not requested |
@@ -216,8 +222,8 @@ would run on AWS; see "How this grows".
 |---|---|---|
 | New product data source | New `ProductRepository` adapter, config | Routes, services, client |
 | New email provider, e.g. AWS SES | New `EmailSender` adapter, config | Everything else |
-| Final branding | `tokens.css`, plus components if layouts change | API and data |
-| Owner manages top-rated picks | New `MerchandisingRepository` adapter | Selection rule, client |
+| Final branding | CSS variables, plus components if layouts change | API and data |
+| Owner manages top-rated picks | Read the IDs from a CMS or database instead of `featured.json` | Selection rule, client |
 | Native mobile app | New client | The API |
 | Large catalogue | Search and paging move into the data source or a search engine | The client's API contract |
 
