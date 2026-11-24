@@ -1,0 +1,39 @@
+# Local run: `docker compose up --build`, then open http://localhost:8080
+# Emails sent by the app appear in Mailpit at http://localhost:8025
+
+services:
+  server:
+    build:
+      context: .
+      dockerfile: server/Dockerfile
+    # Local, non-secret defaults so no .env is needed; override from the shell or a .env.
+    environment:
+      PORT: 3000
+      FAKE_STORE_BASE_URL: ${FAKE_STORE_BASE_URL:-https://fakestoreapi.com}
+      SMTP_HOST: mailpit
+      SMTP_PORT: 1025
+      EMAIL_FROM: ${EMAIL_FROM:-no-reply@example.com}
+      SALES_INBOX_EMAIL: ${SALES_INBOX_EMAIL:-sales@example.com}
+    init: true # forwards Ctrl+C / stop signals to Node
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    depends_on:
+      - mailpit
+
+  client:
+    build:
+      context: .
+      dockerfile: client/Dockerfile
+    ports:
+      - "8080:80"
+    depends_on:
+      server:
+        condition: service_healthy
+
+  mailpit:
+    image: axllent/mailpit
+    ports:
+      - "8025:8025" # web UI; SMTP (1025) stays on the internal network
