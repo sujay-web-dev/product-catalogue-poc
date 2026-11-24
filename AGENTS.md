@@ -4,7 +4,7 @@ Rules for building this repo. DECISIONS.md is the source of truth for behaviour;
 docs/SPEC.md is background. If a change would contradict DECISIONS.md, stop and ask.
 
 ## Layout
-- `server/` – Node 22, TypeScript, Express 5 (port 3000)
+- `server/` – Node 24, TypeScript, Express 5 (port 3000)
 - `client/` – React, Vite, TypeScript, React Router
 - `docker-compose.yml` – server, client (nginx serves the build and proxies /api), Mailpit
 

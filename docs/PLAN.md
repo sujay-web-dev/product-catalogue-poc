@@ -17,7 +17,7 @@ Rules for building this repo. DECISIONS.md is the source of truth for behaviour;
 docs/SPEC.md is background. If a change would contradict DECISIONS.md, stop and ask.
 
 ## Layout
-- `server/` – Node 22, TypeScript, Express 5 (port 3000)
+- `server/` – Node 24, TypeScript, Express 5 (port 3000)
 - `client/` – React, Vite, TypeScript, React Router
 - `docker-compose.yml` – server, client (nginx serves the build and proxies /api), Mailpit
 
@@ -99,13 +99,13 @@ docs/SPEC.md is background. If a change would contradict DECISIONS.md, stop and 
 
 **Scaffold**
 1. Root: npm workspaces (`server`, `client`), shared strict `tsconfig.base.json`,
-   Node 22 `engines`, root `npm test`, `.env.example`.
+   Node 24 `engines`, root `npm test`, `.env.example`.
 2. Server skeleton: `config.ts` (zod env), `createApp(deps)` with helmet, JSON limit,
    404 + error middleware, `GET /api/health` + Supertest test.
 3. Client skeleton: Vite React TS, router with placeholder pages, dev proxy `/api` →
    :3000, Vitest + RTL + MSW setup, one smoke test.
 4. Docker: server Dockerfile, client Dockerfile (build → nginx, proxy `/api`),
-   compose with Mailpit. `docker compose up` shows the placeholder app and health.
+   compose with Mailpit. Base image `node:24-alpine`. `docker compose up` shows the placeholder app and health.
 
 **Backend**
 5. Domain types and ports (`Product`, `Category`, `ProductRepository`, `EmailSender`),
@@ -149,7 +149,7 @@ docs/SPEC.md is background. If a change would contradict DECISIONS.md, stop and 
   `api.ts`. A shared workspace package adds build wiring for ~5 types.
 - **No CORS package.** nginx (compose) and the Vite proxy (dev) keep the client on
   the same origin as `/api`.
-- **No dotenv.** Node 22 `--env-file` and compose `env_file` cover it.
+- **No dotenv.** Node 24 `--env-file` and compose `env_file` cover it.
 - **`any`:** allowed when genuinely required, with a comment saying why. No ESLint.
 - **Branch:** `main` exists on the remote; the PR targets it.
 
