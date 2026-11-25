@@ -4,6 +4,7 @@ import type { ProductRepository } from './domain/ports.ts';
 import { categoryRoutes } from './http/categoryRoutes.ts';
 import { errorHandler, notFoundHandler } from './http/errors.ts';
 import { productRoutes } from './http/productRoutes.ts';
+import { searchRoutes } from './http/searchRoutes.ts';
 import { CatalogueService } from './services/catalogueService.ts';
 
 export type AppDeps = {
@@ -29,6 +30,7 @@ export function createApp(deps: AppDeps) {
   });
   app.use('/api/products', productRoutes(catalogue));
   app.use('/api/categories', categoryRoutes(catalogue));
+  app.use('/api/search', searchRoutes(catalogue));
 
   app.use(notFoundHandler);
   app.use(errorHandler);

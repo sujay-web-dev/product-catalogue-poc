@@ -1,4 +1,5 @@
 import type { ProductRepository } from '../domain/ports.ts';
+import { matchesQuery } from '../domain/search.ts';
 import { CATEGORY_TOP_RATED_LIMIT, HOME_TOP_RATED_LIMIT, selectTopRated } from '../domain/topRated.ts';
 import type { Category, Product } from '../domain/types.ts';
 
@@ -26,6 +27,12 @@ export class CatalogueService {
 
   async getProduct(id: string): Promise<Product | undefined> {
     return this.products.getProduct(id);
+  }
+
+  /** S1/S2: filters the catalogue in memory; results keep source order. */
+  async search(query: string): Promise<Product[]> {
+    const all = await this.products.listProducts();
+    return all.filter((product) => matchesQuery(product, query));
   }
 
   async listCategories(): Promise<Category[]> {
