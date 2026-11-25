@@ -1,3 +1,5 @@
+import { uniqueCategories } from '../domain/categories.ts';
+import { ProductSourceError } from '../domain/errors.ts';
 import type { ProductRepository } from '../domain/ports.ts';
 import type { Category, Product } from '../domain/types.ts';
 import fixture from './products.json' with { type: 'json' };
@@ -21,20 +23,15 @@ export class InMemoryProductRepository implements ProductRepository {
     return this.products.find((product) => product.id === id);
   }
 
-  /** Unique categories, in the order they first appear. */
   async listCategories(): Promise<Category[]> {
-    const bySlug = new Map<string, Category>();
-    for (const { category } of this.products) {
-      if (!bySlug.has(category.slug)) bySlug.set(category.slug, category);
-    }
-    return [...bySlug.values()];
+    return uniqueCategories(this.products);
   }
 }
 
 /** A repository whose source is down, for testing upstream failures (G2). */
 export class FailingProductRepository implements ProductRepository {
   private fail(): never {
-    throw new Error('Product source unavailable');
+    throw new ProductSourceError('Product source unavailable');
   }
 
   async listProducts(): Promise<Product[]> {
