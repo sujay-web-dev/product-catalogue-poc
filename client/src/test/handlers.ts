@@ -51,6 +51,19 @@ export function mockSearch(products = allProducts) {
   return terms;
 }
 
+/** Single products by ID; unknown IDs get the API's 404. */
+export function mockProducts(products = allProducts) {
+  server.use(
+    http.get('/api/products/:id', ({ params }) => {
+      // Leave /api/products/featured to mockFeatured, as the real API routes it first.
+      // Returning nothing passes the request on to the next matching handler.
+      if (params.id === 'featured') return undefined;
+      const product = products.find((p) => p.id === params.id);
+      return product ? HttpResponse.json({ product }) : apiError(404, 'NOT_FOUND', 'Product not found');
+    }),
+  );
+}
+
 /** The home page loads featured products. */
 export function mockFeatured(products = featuredProducts) {
   server.use(http.get('/api/products/featured', () => HttpResponse.json({ products })));

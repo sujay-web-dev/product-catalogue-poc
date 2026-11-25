@@ -3,7 +3,7 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { jacket, ring } from '../test/fixtures';
-import { apiError, featuredProducts, mockCategories, mockFeatured } from '../test/handlers';
+import { apiError, featuredProducts, mockCategories, mockFeatured, mockProducts } from '../test/handlers';
 import { renderApp } from '../test/renderApp';
 import { server } from '../test/server';
 
@@ -53,11 +53,13 @@ describe('Home page', () => {
 
   it('opens the product page when a tile is clicked', async () => {
     mockFeatured([jacket]);
+    mockProducts();
     renderApp('/');
 
     await userEvent.click((await featuredTiles())[0] as HTMLElement);
 
     expect(screen.getByTestId('location')).toHaveTextContent('/products/1');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mens Cotton Jacket' })).toBeInTheDocument();
   });
 
   it('shows a loading message while products load', async () => {

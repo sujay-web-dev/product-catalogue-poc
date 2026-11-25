@@ -15,7 +15,6 @@ describe('AppRoutes', () => {
   // Real pages that load data have their own tests in src/pages/.
   it.each([
     ['/', 'Featured products'],
-    ['/products/1', 'Product'],
     ['/products/1/enquire', 'Enquire'],
     ['/no-such-page', 'Page not found'],
   ])('renders %s', async (path, heading) => {

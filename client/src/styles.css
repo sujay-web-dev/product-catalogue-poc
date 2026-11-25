@@ -206,6 +206,64 @@ textarea {
   color: var(--color-muted);
 }
 
+/* A link that looks like a button, e.g. Enquire. */
+.button-link {
+  display: inline-block;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius);
+  background: var(--color-accent);
+  color: var(--color-accent-text);
+  font-weight: 600;
+  text-decoration: none;
+}
+
+/* Product page (P1) */
+.product {
+  display: grid;
+  gap: var(--space-5);
+  grid-template-columns: 1fr;
+}
+
+@media (min-width: 48rem) {
+  .product {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
+    align-items: start;
+  }
+}
+
+.product__image {
+  width: 100%;
+  max-height: 28rem;
+  object-fit: contain;
+}
+
+.product__details h1 {
+  margin-top: 0;
+}
+
+.product__price {
+  font-size: var(--font-size-large);
+  font-weight: 700;
+}
+
+.product__facts {
+  display: grid;
+  grid-template-columns: max-content 1fr;
+  gap: var(--space-1) var(--space-3);
+}
+
+.product__facts dt {
+  color: var(--color-muted);
+}
+
+.product__facts dd {
+  margin: 0;
+}
+
+.product__description {
+  white-space: pre-line;
+}
+
 .error {
   padding: var(--space-3);
   border: 1px solid var(--color-error);

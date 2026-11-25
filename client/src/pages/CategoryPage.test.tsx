@@ -3,7 +3,14 @@ import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it } from 'vitest';
 import { jewellery } from '../test/fixtures';
-import { apiError, categoryPages, mockCategories, mockCategoryPages, mockFeatured } from '../test/handlers';
+import {
+  apiError,
+  categoryPages,
+  mockCategories,
+  mockCategoryPages,
+  mockFeatured,
+  mockProducts,
+} from '../test/handlers';
 import { renderApp } from '../test/renderApp';
 import { server } from '../test/server';
 
@@ -60,12 +67,14 @@ describe('Category page', () => {
 
   it('opens a product from the category listing', async () => {
     mockCategoryPages();
+    mockProducts();
     renderApp('/categories/mens-clothing');
 
     const list = await screen.findByRole('list', { name: "More in Men's Clothing" });
     await userEvent.click(within(list).getByRole('link'));
 
     expect(screen.getByTestId('location')).toHaveTextContent('/products/4');
+    expect(await screen.findByRole('heading', { level: 1, name: 'Mens Running Shorts' })).toBeInTheDocument();
   });
 
   it('shows "Category not found" with a way home for an unknown category (C2)', async () => {
