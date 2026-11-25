@@ -1,19 +1,15 @@
-import { render, screen } from '@testing-library/react';
+import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
-import { MemoryRouter } from 'react-router';
-import { describe, expect, it, vi } from 'vitest';
-import { AppRoutes } from './App';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockCategories } from './test/handlers';
+import { renderApp } from './test/renderApp';
 import { server } from './test/server';
 
-function renderAt(path: string) {
-  return render(
-    <MemoryRouter initialEntries={[path]}>
-      <AppRoutes />
-    </MemoryRouter>,
-  );
-}
-
 describe('AppRoutes', () => {
+  beforeEach(() => {
+    mockCategories();
+  });
+
   it.each([
     ['/', 'Featured products'],
     ['/categories/electronics', 'Category'],
@@ -21,11 +17,12 @@ describe('AppRoutes', () => {
     ['/products/1', 'Product'],
     ['/products/1/enquire', 'Enquire'],
     ['/no-such-page', 'Page not found'],
-  ])('renders %s', (path, heading) => {
-    renderAt(path);
+  ])('renders %s', async (path, heading) => {
+    renderApp(path);
 
     expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
     expect(screen.getByRole('link', { name: 'Product Catalogue' })).toHaveAttribute('href', '/');
+    await screen.findByRole('navigation', { name: 'Categories' });
   });
 });
 

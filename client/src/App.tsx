@@ -1,22 +1,9 @@
-import { Link, Outlet, Route, Routes } from 'react-router';
+import { Route, Routes } from 'react-router';
+import { Layout } from './components/Layout';
 
 // Placeholder pages; each is replaced by a real page in tasks 14–18.
 function Placeholder({ title }: { title: string }) {
   return <h1>{title}</h1>;
-}
-
-function Layout() {
-  // Task 13 adds category links and the search bar here (C3).
-  return (
-    <>
-      <header>
-        <Link to="/">Product Catalogue</Link>
-      </header>
-      <main>
-        <Outlet />
-      </main>
-    </>
-  );
 }
 
 export function AppRoutes() {

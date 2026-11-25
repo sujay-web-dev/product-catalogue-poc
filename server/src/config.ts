@@ -18,7 +18,10 @@ export function loadConfig(env: NodeJS.ProcessEnv = process.env): Config {
   if (!result.success) {
     // Name the bad variables only; never echo their values.
     const names = [...new Set(result.error.issues.map((issue) => issue.path.join('.')))];
-    throw new Error(`Invalid environment configuration: ${names.join(', ')}`);
+    throw new Error(
+      `Invalid environment configuration: ${names.join(', ')}. ` +
+        'For local development, copy .env.example to .env in the repo root.',
+    );
   }
   return result.data;
 }

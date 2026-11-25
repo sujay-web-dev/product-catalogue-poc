@@ -6,6 +6,7 @@ import { categoryRoutes } from './http/categoryRoutes.ts';
 import { enquiryRoutes } from './http/enquiryRoutes.ts';
 import { errorHandler, notFoundHandler } from './http/errors.ts';
 import { productRoutes } from './http/productRoutes.ts';
+import { requestLogger } from './http/requestLogger.ts';
 import { searchRoutes } from './http/searchRoutes.ts';
 import { CatalogueService } from './services/catalogueService.ts';
 import { EnquiryService } from './services/enquiryService.ts';
@@ -16,6 +17,8 @@ export type AppDeps = {
   emailAddresses: EmailAddresses;
   /** H1: the owner's top-rated picks. */
   featuredIds: readonly string[];
+  /** One log line per request. Off in tests to keep their output readable. */
+  logRequests?: boolean;
 };
 
 /**
@@ -30,6 +33,7 @@ export function createApp(deps: AppDeps) {
   // E7: one proxy (nginx in Docker, Vite in dev) sits in front of the API, so the
   // client IP for rate limiting comes from its X-Forwarded-For header.
   app.set('trust proxy', 1);
+  if (deps.logRequests) app.use(requestLogger);
   app.use(helmet());
   // E7: small request size limit. An enquiry is a few short fields.
   app.use(express.json({ limit: '10kb' }));

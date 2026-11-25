@@ -15,6 +15,7 @@ const app = createApp({
   ),
   emailAddresses: { from: config.EMAIL_FROM, salesInbox: config.SALES_INBOX_EMAIL },
   featuredIds: loadFeaturedIds(),
+  logRequests: true,
 });
 
 app.listen(config.PORT, () => {

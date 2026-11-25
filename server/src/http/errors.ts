@@ -70,5 +70,6 @@ export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next
     console.error(err);
   }
 
+  res.locals.errorCode = body.error.code; // picked up by the request logger
   res.status(status).json(body);
 };
