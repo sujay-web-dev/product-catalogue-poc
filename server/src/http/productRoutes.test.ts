@@ -1,30 +1,10 @@
 import request from 'supertest';
-import { afterEach, describe, expect, it, vi } from 'vitest';
-import { FailingProductRepository } from '../testing/inMemoryProductRepository.ts';
+import { describe, expect, it } from 'vitest';
+import { expectSourceUnavailable } from '../testing/expectSourceUnavailable.ts';
 import { createTestApp } from '../testing/testApp.ts';
 
 type ProductBody = { id: string; title: string };
 const ids = (products: ProductBody[]) => products.map((product) => product.id);
-
-afterEach(() => {
-  vi.restoreAllMocks();
-});
-
-/** G2: a source outage becomes a friendly 503 with no internal details. */
-async function expectSourceUnavailable(path: string) {
-  vi.spyOn(console, 'warn').mockImplementation(() => {});
-  const app = createTestApp({ productRepository: new FailingProductRepository() });
-
-  const res = await request(app).get(path);
-
-  expect(res.status).toBe(503);
-  expect(res.body).toEqual({
-    error: {
-      code: 'PRODUCT_SOURCE_UNAVAILABLE',
-      message: 'Products are temporarily unavailable. Please try again shortly.',
-    },
-  });
-}
 
 // Fixture ratings, highest first: 1=4.7, 8=4.6, 7=4.5, 4=4.1, 3=3.9, 6=3.8 …
 describe('GET /api/products/featured', () => {
