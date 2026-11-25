@@ -1,4 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
+import { ProductSourceError } from '../domain/errors.ts';
 
 export type ErrorBody = { error: { code: string; message: string } };
 
@@ -39,6 +40,16 @@ export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next
   if (err instanceof HttpError) {
     status = err.status;
     body = { error: { code: err.code, message: err.message } };
+  } else if (err instanceof ProductSourceError) {
+    // G2: the client shows a friendly "try again" message; details stay in the log.
+    console.warn(`Product source error: ${err.message}`);
+    status = 503;
+    body = {
+      error: {
+        code: 'PRODUCT_SOURCE_UNAVAILABLE',
+        message: 'Products are temporarily unavailable. Please try again shortly.',
+      },
+    };
   } else if (parserStatus === 413) {
     status = 413;
     body = { error: { code: 'PAYLOAD_TOO_LARGE', message: 'Request body is too large' } };
