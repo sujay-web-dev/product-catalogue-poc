@@ -1,5 +1,5 @@
 import type { ErrorRequestHandler, RequestHandler } from 'express';
-import { ProductSourceError } from '../domain/errors.ts';
+import { EmailDeliveryError, ProductSourceError } from '../domain/errors.ts';
 
 export type ErrorBody = { error: { code: string; message: string } };
 
@@ -48,6 +48,15 @@ export const errorHandler: ErrorRequestHandler = (err: unknown, _req, res, _next
       error: {
         code: 'PRODUCT_SOURCE_UNAVAILABLE',
         message: 'Products are temporarily unavailable. Please try again shortly.',
+      },
+    };
+  } else if (err instanceof EmailDeliveryError) {
+    // E5: already logged without contact details; the customer can retry.
+    status = 502;
+    body = {
+      error: {
+        code: 'EMAIL_SEND_FAILED',
+        message: "We couldn't send your enquiry. Please try again.",
       },
     };
   } else if (parserStatus === 413) {

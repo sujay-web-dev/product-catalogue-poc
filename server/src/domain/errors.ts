@@ -9,3 +9,14 @@ export class ProductSourceError extends Error {
     this.name = 'ProductSourceError';
   }
 }
+
+/**
+ * E5: the email provider did not accept the enquiry email.
+ * The HTTP layer turns this into a 502 so the customer can retry.
+ */
+export class EmailDeliveryError extends Error {
+  constructor(options?: { cause?: unknown }) {
+    super('Enquiry email could not be sent', options);
+    this.name = 'EmailDeliveryError';
+  }
+}

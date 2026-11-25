@@ -5,7 +5,7 @@ import { HttpError } from './errors.ts';
 import { validate } from './validate.ts';
 
 // Our IDs are strings (see domain/types.ts); this keeps junk out of lookups and logs.
-const productIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
+export const productIdSchema = z.string().regex(/^[A-Za-z0-9_-]{1,64}$/);
 
 export function productRoutes(catalogue: CatalogueService): Router {
   const router = Router();
