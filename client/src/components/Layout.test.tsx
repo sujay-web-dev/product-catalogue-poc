@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockCategories, mockFeatured } from '../test/handlers';
+import { mockCategories, mockCategoryPages, mockFeatured } from '../test/handlers';
 import { renderApp } from '../test/renderApp';
 import { server } from '../test/server';
 
@@ -22,6 +22,7 @@ describe('Layout header (C3)', () => {
 
   it('marks the current category link as active', async () => {
     mockCategories();
+    mockCategoryPages();
     renderApp('/categories/jewellery');
 
     expect(await screen.findByRole('link', { name: 'Jewellery' })).toHaveAttribute('aria-current', 'page');

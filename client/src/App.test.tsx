@@ -4,6 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { mockCategories, mockFeatured } from './test/handlers';
 import { renderApp } from './test/renderApp';
 import { server } from './test/server';
+import { unhandledRequests } from './test/setup';
 
 describe('AppRoutes', () => {
   beforeEach(() => {
@@ -11,9 +12,9 @@ describe('AppRoutes', () => {
     mockFeatured();
   });
 
+  // Real pages that load data have their own tests in src/pages/.
   it.each([
     ['/', 'Featured products'],
-    ['/categories/electronics', 'Category'],
     ['/search?q=shirt', 'Search results'],
     ['/products/1', 'Product'],
     ['/products/1/enquire', 'Enquire'],
@@ -36,14 +37,16 @@ describe('test setup', () => {
     expect(await res.json()).toEqual({ status: 'ok' });
   });
 
-  it('fails requests that have no handler, so tests never reach the network', async () => {
+  it('blocks requests that have no handler and records them, so the test fails', async () => {
     vi.spyOn(console, 'error').mockImplementation(() => {});
 
-    // Assert MSW's own error, not just any failure: a real request to a closed
-    // port would also reject, which would hide a misconfigured setup.
-    await expect(fetch('/api/unhandled')).rejects.toMatchObject({
-      cause: { message: expect.stringContaining('[MSW]') },
-    });
+    const res = await fetch('/api/unhandled');
+
+    // MSW's own answer, not a real server's: the request never left the test.
+    expect(res.status).toBe(500);
+    expect(res.statusText).toBe('Unhandled Exception');
+    // Normally setup.ts fails the test for this; clear it because it is expected here.
+    expect(unhandledRequests.splice(0)).toEqual(['GET /api/unhandled']);
 
     vi.restoreAllMocks();
   });
