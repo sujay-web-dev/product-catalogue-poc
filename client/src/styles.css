@@ -146,7 +146,63 @@ textarea {
   padding: var(--space-4) var(--space-3);
 }
 
+.lead {
+  margin-top: calc(-1 * var(--space-2));
+  color: var(--color-muted);
+}
+
 .status {
+  color: var(--color-muted);
+}
+
+/* Product tiles */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-5);
+  padding: 0;
+  list-style: none;
+}
+
+.tile {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  height: 100%;
+  padding: var(--space-3);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius);
+  color: var(--color-text);
+  text-decoration: none;
+  background: var(--color-bg);
+}
+
+.tile:hover {
+  border-color: var(--color-accent);
+}
+
+.tile__image {
+  width: 100%;
+  aspect-ratio: 1;
+  object-fit: contain;
+}
+
+.tile__title {
+  /* Long source titles: show three lines at most. */
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.tile__price {
+  margin-top: auto;
+  font-weight: 700;
+}
+
+.tile__rating {
+  font-size: var(--font-size-small);
   color: var(--color-muted);
 }
 

@@ -1,13 +1,14 @@
 import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockCategories } from './test/handlers';
+import { mockCategories, mockFeatured } from './test/handlers';
 import { renderApp } from './test/renderApp';
 import { server } from './test/server';
 
 describe('AppRoutes', () => {
   beforeEach(() => {
     mockCategories();
+    mockFeatured();
   });
 
   it.each([

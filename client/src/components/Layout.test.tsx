@@ -1,12 +1,16 @@
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
-import { describe, expect, it, vi } from 'vitest';
-import { mockCategories } from '../test/handlers';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { mockCategories, mockFeatured } from '../test/handlers';
 import { renderApp } from '../test/renderApp';
 import { server } from '../test/server';
 
 describe('Layout header (C3)', () => {
+  beforeEach(() => {
+    mockFeatured(); // the home page at "/" loads these
+  });
+
   it('links to every category from the API, using our slugs', async () => {
     mockCategories();
     renderApp('/');
