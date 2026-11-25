@@ -64,6 +64,23 @@ export function mockProducts(products = allProducts) {
   );
 }
 
+/**
+ * POST /api/enquiries. Answers with each response in turn (the last one repeats)
+ * and returns the bodies received, to check exactly what the form sent.
+ */
+export function mockEnquiry(...responses: Array<() => Response>) {
+  const bodies: unknown[] = [];
+  const queue = responses.length > 0 ? responses : [() => HttpResponse.json({ status: 'sent' }, { status: 201 })];
+  server.use(
+    http.post('/api/enquiries', async ({ request }) => {
+      bodies.push(await request.json());
+      const respond = queue.length > 1 ? queue.shift() : queue[0];
+      return respond ? respond() : HttpResponse.json({ status: 'sent' }, { status: 201 });
+    }),
+  );
+  return bodies;
+}
+
 /** The home page loads featured products. */
 export function mockFeatured(products = featuredProducts) {
   server.use(http.get('/api/products/featured', () => HttpResponse.json({ products })));

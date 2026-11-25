@@ -1,26 +1,22 @@
 import { screen } from '@testing-library/react';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockCategories, mockFeatured } from './test/handlers';
+import { mockCategories } from './test/handlers';
 import { renderApp } from './test/renderApp';
 import { server } from './test/server';
 import { unhandledRequests } from './test/setup';
 
+// Each page has its own tests in src/pages/.
 describe('AppRoutes', () => {
   beforeEach(() => {
     mockCategories();
-    mockFeatured();
   });
 
-  // Real pages that load data have their own tests in src/pages/.
-  it.each([
-    ['/', 'Featured products'],
-    ['/products/1/enquire', 'Enquire'],
-    ['/no-such-page', 'Page not found'],
-  ])('renders %s', async (path, heading) => {
-    renderApp(path);
+  it('shows "Page not found" for an unknown URL, inside the normal layout', async () => {
+    renderApp('/no-such-page');
 
-    expect(screen.getByRole('heading', { level: 1, name: heading })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { level: 1, name: 'Page not found' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Back to featured products' })).toHaveAttribute('href', '/');
     expect(screen.getByRole('link', { name: 'Product Catalogue' })).toHaveAttribute('href', '/');
     await screen.findByRole('navigation', { name: 'Categories' });
   });

@@ -264,6 +264,52 @@ textarea {
   white-space: pre-line;
 }
 
+/* Enquiry form (E1, E2) */
+.enquiry-form {
+  display: grid;
+  gap: var(--space-3);
+  max-width: 36rem;
+  margin-top: var(--space-4);
+}
+
+.field {
+  display: grid;
+  gap: var(--space-1);
+}
+
+.field label {
+  font-weight: 600;
+}
+
+.field__optional {
+  font-weight: 400;
+  color: var(--color-muted);
+}
+
+.field input[aria-invalid='true'],
+.field textarea[aria-invalid='true'] {
+  border-color: var(--color-error);
+}
+
+.field__error {
+  margin: 0;
+  font-size: var(--font-size-small);
+  color: var(--color-error);
+}
+
+.enquiry-form button {
+  justify-self: start;
+}
+
+.enquiry-form button:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+
+.thank-you h1 {
+  color: var(--color-success);
+}
+
 .error {
   padding: var(--space-3);
   border: 1px solid var(--color-error);
