@@ -1,10 +1,5 @@
 # Decisions and assumptions
 
-<!--
-Draft written on 24 Nov, before any code. Planned names (functions, env vars,
-routes) get checked against the code before the PR is opened.
--->
-
 The acceptance criteria leave gaps on purpose. Where something was unclear I
 made the smallest reasonable assumption, recorded why, and noted what it would
 cost to change if it turns out to be wrong. The IDs (H1, S2, …) are referenced
@@ -40,9 +35,12 @@ The owner's top-rated picks live in a plain config file (`featured.json`).
 I didn't put an interface in front of it: nothing in the brief says it will
 change soon, and adding one later is a small change.
 
-- One composition root picks the adapters from environment variables. Changing
-  the data source or email provider means adding an adapter and changing config,
-  not editing routes, services or the client.
+- One composition root (`server/src/index.ts`) creates the adapters and passes
+  them their settings from environment variables. Changing the data source or
+  email provider means adding an adapter and changing that file, not editing
+  routes, services or the client.
+- Product IDs are strings in our API (Fake Store's numbers are converted in the
+  adapter), so a future source can use SKUs or UUIDs.
 - The client talks only to our API. It never sees Fake Store URLs, field names
   or category strings.
 - API: REST under `/api`, errors as JSON in one shape, no stack traces in
@@ -58,7 +56,10 @@ change soon, and adding one later is a small change.
 - API tests over HTTP for every endpoint, including validation failures.
 - UI tests for the critical flows: home, category, search, product, enquiry.
 - Tests use a fake product repository loaded from a JSON fixture and a fake
-  email sender, so they never touch the network.
+  email sender, so they never touch the network. Client tests mock the API with
+  MSW, and any request without a mock fails the test that made it.
+- The Fake Store adapter is tested with a stubbed `fetch` (timeouts, bad data,
+  outages) and was also checked by hand against the live API.
 
 ## Assumptions
 
@@ -94,7 +95,8 @@ change soon, and adding one later is a small change.
 **C2. Our API owns category identifiers.**
 - Gap: source categories include "men's clothing" and the misspelt "jewelery".
 - Assumption: the API exposes `{ slug, name }`, for example `mens-clothing` and
-  "Men's Clothing". Unknown slugs return 404.
+  "Men's Clothing". "jewelery" becomes `jewellery` / "Jewellery", the Australian
+  spelling to match AUD prices. Unknown slugs return 404.
 - Why: raw source strings make fragile URLs and leak the data source into the
   client.
 - If wrong: the mapping lives only in the Fake Store adapter.
@@ -107,8 +109,9 @@ change soon, and adding one later is a small change.
 
 **S1. Search runs in our backend.**
 - Gap: Fake Store has no search endpoint.
-- Assumption: the backend loads the catalogue once, caches it with an expiry,
-  and the search service filters the list in memory with `matchesQuery()`.
+- Assumption: the backend loads the catalogue once (`GET /products`, see G4),
+  caches it with an expiry, and the search service filters the list in memory
+  with `matchesQuery()`.
   `ProductRepository` has no `search()` method yet.
 - Why: fine for 20 products, and the smallest interface that works.
 - If wrong (large catalogue): add `search()` to `ProductRepository` and implement
@@ -153,7 +156,9 @@ change soon, and adding one later is a small change.
 
 **E2. Contact details.**
 - Assumption: name and email required; phone and message optional; length
-  limits on every field.
+  limits on every field (name 100, email 254, phone 30, message 2000). Phone
+  allows digits, spaces and `+ ( ) -`. Errors name the invalid fields but never
+  echo what was typed.
 - The server's validation is the final word. The browser validates only to help
   the user.
 
@@ -179,8 +184,14 @@ change soon, and adding one later is a small change.
 - Next: save enquiries and send emails from a queue with retries.
 
 **E7. Abuse and personal data.**
-- Assumption: a rate limit on the enquiry endpoint, a request size limit, and no
-  contact details in logs.
+- Assumption: a rate limit on the enquiry endpoint (10 per client IP per 15
+  minutes), a 10 KB request size limit, and no contact details in logs (only
+  the product ID and error type).
+- The server logs one line per request: method, URL (which includes search
+  terms), status and duration. Request and response bodies are never logged.
+- The API trusts one proxy hop (nginx in Docker, Vite in development) for the
+  client IP. Exposing the API directly would let clients fake their IP, so in
+  Docker it is reachable only through nginx.
 - A CAPTCHA needs a third-party account, which the brief rules out for
   reviewers, so it is a next step.
 
@@ -197,11 +208,24 @@ covers phones now, and a native app can reuse the API later. Basic
 accessibility throughout: semantic HTML, labelled fields, alt text, keyboard
 use.
 
-**G2. Fake Store may be slow or down.** A 5-second timeout, a cached catalogue,
-and a friendly error page instead of a crash.
+**G2. Fake Store may be slow or down.** A 5-second timeout, a cached catalogue
+(5 minutes), and a friendly error page instead of a crash. If a refresh fails
+and an older catalogue is cached, the old one is served and the refresh is
+retried 30 seconds later. A malformed product is skipped and logged rather than
+failing the whole catalogue.
 
 **G3. Infrastructure.** Dockerfiles and Docker Compose only. Both containers
 would run on AWS; see "How this grows".
+
+**G4. Fake Store's documentation and behaviour differ.**
+- Gap: its OpenAPI spec doesn't document `rating` or `/products/categories`,
+  and says errors are 400; live, `GET /products/999` returns 200 with an empty
+  body (checked 24 Nov).
+- Assumption: rely on the one documented call, `GET /products`. Categories and
+  single products are worked out from that cached list. `rating` is optional:
+  unrated products rank last for top rated (H2) and show no rating.
+- Why: an undocumented field disappearing shouldn't take the site down, and an
+  empty 200 can't be mistaken for a product.
 
 ## Dropped or simplified
 
@@ -213,6 +237,7 @@ would run on AWS; see "How this grows".
 | CAPTCHA, honeypot field | CAPTCHA needs a third-party account; the rate limit covers the basics (E7) |
 | Interface for top-rated picks | Config file is enough until the owner needs to edit picks (H1) |
 | Switch to run from local JSON instead of Fake Store | The fixture is used in tests only (G2) |
+| SMTP username and password settings | Mailpit needs none; production would use an SES adapter (E4) |
 | Accounts, cart, checkout | Not in the acceptance criteria |
 | Server rendering and SEO | Not needed for an interactive proof of concept |
 | Translations | Not requested |
@@ -236,11 +261,12 @@ secrets in Secrets Manager; enquiries saved to DynamoDB and sent through SQS.
 
 ## With another day
 
-<!-- Confirm at the end against what was actually cut. -->
-
-- Save enquiries and send emails from a queue with retries.
-- An OpenAPI description of the API, with client types generated from it.
+- Save enquiries and send emails from a queue with retries (E6).
 - An end-to-end browser test that also checks the email arrived in Mailpit.
-- Serve images from our own storage and CDN.
+  Today that path is covered by API tests plus a manual check.
+- An OpenAPI description of the API, with client types generated from it, in
+  place of the hand-written types in `client/src/api.ts`.
+- An AWS SES `EmailSender` adapter, and infrastructure as code for the AWS setup.
+- Pin the Docker base images (`nginx`, `mailpit`) to exact versions.
 - Structured logs with request IDs, and basic metrics.
-- Infrastructure as code for the AWS setup.
+- Serve images from our own storage and CDN (P2).
