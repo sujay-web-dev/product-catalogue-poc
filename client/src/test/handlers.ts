@@ -30,6 +30,27 @@ export function mockCategoryPages(pages = categoryPages) {
   );
 }
 
+export const allProducts: Product[] = [jacket, belt, beanie, shorts, ring];
+
+/**
+ * Search over the fixture titles. Deliberately simple: the real matching rule
+ * (S2) is tested on the server; here we only need predictable results.
+ * Returns the list of search terms received, to check what the page sent.
+ */
+export function mockSearch(products = allProducts) {
+  const terms: string[] = [];
+  server.use(
+    http.get('/api/search', ({ request }) => {
+      const q = new URL(request.url).searchParams.get('q') ?? '';
+      terms.push(q);
+      const words = q.toLowerCase().split(/\s+/).filter(Boolean);
+      const matches = products.filter((p) => words.every((w) => p.title.toLowerCase().includes(w)));
+      return HttpResponse.json({ products: matches });
+    }),
+  );
+  return terms;
+}
+
 /** The home page loads featured products. */
 export function mockFeatured(products = featuredProducts) {
   server.use(http.get('/api/products/featured', () => HttpResponse.json({ products })));

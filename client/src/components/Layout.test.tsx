@@ -2,7 +2,7 @@ import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { http, HttpResponse } from 'msw';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { mockCategories, mockCategoryPages, mockFeatured } from '../test/handlers';
+import { mockCategories, mockCategoryPages, mockFeatured, mockSearch } from '../test/handlers';
 import { renderApp } from '../test/renderApp';
 import { server } from '../test/server';
 
@@ -31,13 +31,14 @@ describe('Layout header (C3)', () => {
 
   it('searches with the trimmed term when the Search button is clicked', async () => {
     mockCategories();
+    mockSearch();
     renderApp('/');
 
     await userEvent.type(screen.getByRole('searchbox', { name: 'Search products' }), '  men jacket ');
     await userEvent.click(screen.getByRole('button', { name: 'Search' }));
 
     expect(screen.getByTestId('location')).toHaveTextContent('/search?q=men+jacket');
-    expect(screen.getByRole('heading', { level: 1, name: 'Search results' })).toBeInTheDocument();
+    expect(await screen.findByRole('heading', { level: 1, name: 'Search results for “men jacket”' })).toBeInTheDocument();
   });
 
   it('does not search for an empty term (S3)', async () => {
@@ -52,9 +53,11 @@ describe('Layout header (C3)', () => {
 
   it('shows the current term in the search box on the results page', async () => {
     mockCategories();
+    mockSearch();
     renderApp('/search?q=belt');
 
     expect(screen.getByRole('searchbox', { name: 'Search products' })).toHaveValue('belt');
+    await screen.findByText('1 product found');
   });
 
   it('keeps search and the home link working when categories fail to load', async () => {
